@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Preset } from "../types/diff";
+import type { Preset, RecentComparison } from "../types/diff";
 
 defineProps<{
   presets: Preset[];
@@ -7,10 +7,12 @@ defineProps<{
   modeLabel: string;
   includeCount: number;
   ignoreCount: number;
+  recentComparisons: Array<RecentComparison & { comparedAtLabel: string }>;
 }>();
 
 const emit = defineEmits<{
   select: [presetId: string];
+  selectRecent: [record: RecentComparison];
 }>();
 </script>
 
@@ -44,6 +46,23 @@ const emit = defineEmits<{
           <div><span>比较方式</span><span class="value">{{ modeLabel }}</span></div>
           <div><span>显示内容</span><span class="value">只显示变化</span></div>
           <div><span>导出格式</span><span class="value">TXT</span></div>
+        </div>
+      </div>
+
+      <div v-if="recentComparisons.length > 0" class="summary recent-summary">
+        <div class="summary-title">最近比较</div>
+        <div class="recent-list">
+          <button
+            v-for="record in recentComparisons"
+            :key="`${record.oldDir}|${record.newDir}|${record.comparedAt}`"
+            class="recent-item"
+            type="button"
+            @click="emit('selectRecent', record)"
+          >
+            <strong>{{ record.comparedAtLabel }}</strong>
+            <span>{{ record.oldDir }}</span>
+            <span>{{ record.newDir }}</span>
+          </button>
         </div>
       </div>
     </div>

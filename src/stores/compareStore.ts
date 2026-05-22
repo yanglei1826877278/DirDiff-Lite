@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { ask, open, save } from "@tauri-apps/plugin-dialog";
 import { openPath, revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -8,6 +9,7 @@ import type {
   AppConfig,
   BannerState,
   CompareForm,
+  CompareProgressState,
   CompareOptions,
   DiffFile,
   DiffResult,
@@ -15,7 +17,7 @@ import type {
   PageId,
   ResultFilter,
   FolderDropTarget,
-  ResultSort,
+  RecentComparison,
   SettingsDraft,
 } from "../types/diff";
 
@@ -61,6 +63,9 @@ function sanitizeConfig(config?: Partial<AppConfig> | null): AppConfig {
         : fallback.defaultCompareMode,
     defaultExportFileName:
       config?.defaultExportFileName?.trim() || fallback.defaultExportFileName,
+    recentComparisons: Array.isArray(config?.recentComparisons)
+      ? config.recentComparisons
+      : fallback.recentComparisons,
   };
 }
 
@@ -92,6 +97,22 @@ function sanitizeResult(result?: Partial<DiffResult> | null): DiffResult {
   };
 }
 
+function timestampLabel(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("zh-CN", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function toErrorMessage(error: unknown): string {
   if (typeof error === "string") {
     return error;
@@ -106,6 +127,8 @@ function toErrorMessage(error: unknown): string {
 
 const initialConfig = createDefaultConfig();
 let bannerTimer: ReturnType<typeof setTimeout> | undefined;
+let progressUnlisten: UnlistenFn | undefined;
+const RESULT_PAGE_SIZE = 200;
 
 const state = reactive({
   page: "compare" as PageId,
@@ -121,11 +144,19 @@ const state = reactive({
   folderDropTarget: null as FolderDropTarget,
   result: null as DiffResult | null,
   lastCompareOptions: null as CompareOptions | null,
+  compareProgress: {
+    stage: "idle",
+    current: 0,
+    total: 0,
+    percent: 0,
+    message: "",
+    visible: false,
+  } as CompareProgressState,
   hasCompared: false,
   resultFilter: "all" as ResultFilter,
-  resultSort: "path-asc" as ResultSort,
   extFilter: "all",
   searchQuery: "",
+  resultPage: 1,
 });
 
 const allChanges = computed<DiffFile[]>(() => {
@@ -173,23 +204,7 @@ const filteredFiles = computed<DiffFile[]>(() => {
     return matchesStatus && matchesExt && matchesSearch;
   });
 
-  return matched.sort((left, right) => {
-    switch (state.resultSort) {
-      case "path-desc":
-        return right.path.localeCompare(left.path, "zh-CN");
-      case "status": {
-        const statusOrder = { added: 0, modified: 1, deleted: 2 };
-        const diff = statusOrder[left.status] - statusOrder[right.status];
-        return diff !== 0 ? diff : left.path.localeCompare(right.path, "zh-CN");
-      }
-      case "ext": {
-        const diff = left.ext.localeCompare(right.ext, "zh-CN");
-        return diff !== 0 ? diff : left.path.localeCompare(right.path, "zh-CN");
-      }
-      default:
-        return left.path.localeCompare(right.path, "zh-CN");
-    }
-  });
+  return matched.sort((left, right) => left.path.localeCompare(right.path, "zh-CN"));
 });
 
 const availableExtensions = computed<string[]>(() =>
@@ -210,16 +225,19 @@ const resultCounts = computed(() => ({
 }));
 
 const currentModeLabel = computed(() => compareModeLabel(state.compareForm.compareMode));
-const resultSummaryText = computed(() => {
-  if (!state.result) {
-    return "还没有比较结果。";
-  }
+const totalResultPages = computed(() =>
+  Math.max(1, Math.ceil(filteredFiles.value.length / RESULT_PAGE_SIZE)),
+);
+const recentComparisons = computed(() =>
+  state.config.recentComparisons.slice(0, 10).map((item) => ({
+    ...item,
+    comparedAtLabel: timestampLabel(item.comparedAt),
+  })),
+);
 
-  if (resultCounts.value.total === 0) {
-    return "两个目录在当前规则下没有发现变化。";
-  }
-
-  return `共发现 ${resultCounts.value.total} 个变化文件，其中新增 ${resultCounts.value.added}、删除 ${resultCounts.value.deleted}、修改 ${resultCounts.value.modified}。`;
+const paginatedFiles = computed(() => {
+  const start = (state.resultPage - 1) * RESULT_PAGE_SIZE;
+  return filteredFiles.value.slice(start, start + RESULT_PAGE_SIZE);
 });
 
 function setBanner(tone: BannerState["tone"], text: string, duration = 3600): void {
@@ -308,7 +326,13 @@ function buildConfigFromDraft(draft: SettingsDraft): AppConfig {
     defaultIgnoreDirs: parseCsvInput(draft.ignoreDirInput, "dir"),
     defaultCompareMode: draft.compareMode,
     defaultExportFileName: draft.exportFileName.trim(),
+    recentComparisons: state.config.recentComparisons,
   });
+}
+
+async function persistConfig(config: AppConfig): Promise<void> {
+  await invoke("save_config", { config });
+  state.config = config;
 }
 
 async function initialize(): Promise<void> {
@@ -319,6 +343,15 @@ async function initialize(): Promise<void> {
   state.isBooting = true;
 
   try {
+    if (!progressUnlisten) {
+      progressUnlisten = await listen<CompareProgressState>("compare-progress", (event) => {
+        state.compareProgress = {
+          ...event.payload,
+          visible: event.payload.stage !== "finished",
+        };
+      });
+    }
+
     const loaded = await invoke<AppConfig>("load_config");
     state.config = sanitizeConfig(loaded);
     state.compareForm = createCompareForm(state.config);
@@ -387,6 +420,14 @@ async function runCompare(): Promise<void> {
   }
 
   state.isComparing = true;
+  state.compareProgress = {
+    stage: "starting",
+    current: 0,
+    total: 0,
+    percent: 0,
+    message: "正在准备比较任务…",
+    visible: true,
+  };
 
   try {
     const result = sanitizeResult(await invoke<DiffResult>("compare_folders", { options }));
@@ -394,16 +435,25 @@ async function runCompare(): Promise<void> {
     state.lastCompareOptions = options;
     state.hasCompared = true;
     state.resultFilter = "all";
-    state.resultSort = "path-asc";
     state.extFilter = "all";
     state.searchQuery = "";
+    state.resultPage = 1;
     state.page = "result";
+    await saveRecentComparison(options);
     const total = result.added.length + result.deleted.length + result.modified.length;
     setBanner("success", `比较完成，共发现 ${total} 个变化文件。`);
   } catch (error) {
+    state.compareProgress.visible = false;
     setBanner("error", `比较失败：${toErrorMessage(error)}`);
   } finally {
     state.isComparing = false;
+    state.compareProgress = {
+      ...state.compareProgress,
+      visible: false,
+      stage: "finished",
+      percent: 100,
+      message: "比较完成。",
+    };
   }
 }
 
@@ -416,8 +466,7 @@ async function saveCurrentAsDefault(): Promise<void> {
   });
 
   try {
-    await invoke("save_config", { config });
-    state.config = config;
+    await persistConfig(config);
     state.settingsDraft = createSettingsDraft(config);
     setBanner("success", "当前比较规则已保存为默认配置。");
   } catch (error) {
@@ -430,8 +479,7 @@ async function saveSettings(): Promise<void> {
 
   try {
     const config = buildConfigFromDraft(state.settingsDraft);
-    await invoke("save_config", { config });
-    state.config = config;
+    await persistConfig(config);
     state.compareForm = {
       ...state.compareForm,
       includeExtInput: formatCsvInput(config.defaultIncludeExts),
@@ -577,9 +625,57 @@ function getFilterCount(filter: ResultFilter): number {
 
 function resetResultFilters(): void {
   state.resultFilter = "all";
-  state.resultSort = "path-asc";
   state.extFilter = "all";
   state.searchQuery = "";
+  state.resultPage = 1;
+}
+
+function previousResultPage(): void {
+  if (state.resultPage > 1) {
+    state.resultPage -= 1;
+  }
+}
+
+function nextResultPage(): void {
+  if (state.resultPage < totalResultPages.value) {
+    state.resultPage += 1;
+  }
+}
+
+async function saveRecentComparison(options: CompareOptions): Promise<void> {
+  const record: RecentComparison = {
+    oldDir: options.oldDir,
+    newDir: options.newDir,
+    compareMode: options.compareMode,
+    includeExts: options.includeExts,
+    ignoreDirs: options.ignoreDirs,
+    comparedAt: new Date().toISOString(),
+  };
+
+  const uniqueRecords = state.config.recentComparisons.filter(
+    (item) =>
+      !(
+        item.oldDir === record.oldDir &&
+        item.newDir === record.newDir &&
+        item.compareMode === record.compareMode
+      ),
+  );
+
+  const config = sanitizeConfig({
+    ...state.config,
+    recentComparisons: [record, ...uniqueRecords].slice(0, 10),
+  });
+
+  await persistConfig(config);
+}
+
+function applyRecentComparison(record: RecentComparison): void {
+  state.compareForm.oldDir = record.oldDir;
+  state.compareForm.newDir = record.newDir;
+  state.compareForm.compareMode = record.compareMode;
+  state.compareForm.includeExtInput = formatCsvInput(record.includeExts);
+  state.compareForm.ignoreDirInput = formatCsvInput(record.ignoreDirs);
+  setBanner("info", "已回填最近一次比较记录。", 2200);
 }
 
 async function openReadme(): Promise<void> {
@@ -597,10 +693,12 @@ const store = {
   canCompare,
   compareValidationMessage,
   filteredFiles,
+  paginatedFiles,
   availableExtensions,
   resultCounts,
   currentModeLabel,
-  resultSummaryText,
+  totalResultPages,
+  recentComparisons,
   notify: setBanner,
   initialize,
   setPage,
@@ -624,6 +722,9 @@ const store = {
   revealFileInFolder,
   getFilterCount,
   resetResultFilters,
+  previousResultPage,
+  nextResultPage,
+  applyRecentComparison,
   openReadme,
 };
 

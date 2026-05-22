@@ -100,7 +100,7 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
           </div>
         </aside>
 
-        <section class="panel">
+        <section class="panel result-panel">
           <div class="panel-header">
             <div class="panel-title">变化文件</div>
             <div class="panel-desc">
@@ -122,18 +122,38 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
               </div>
             </div>
 
-            <ResultTable
-              :files="store.filteredFiles.value"
-              @copy="store.copyFileWithChoice"
-              @reveal="store.revealFileInFolder"
-            />
+            <div class="result-table-area">
+              <ResultTable
+                :files="store.paginatedFiles.value"
+                @copy="store.copyFileWithChoice"
+                @reveal="store.revealFileInFolder"
+              />
+            </div>
 
             <div class="footer-line">
               <span>
-                当前显示 {{ store.filteredFiles.value.length }} 个文件，共
+                当前第 {{ store.state.resultPage }} / {{ store.totalResultPages.value }} 页，
+                本页 {{ store.paginatedFiles.value.length }} 个文件，共
                 {{ store.resultCounts.value.total }} 个变化文件。
               </span>
-              <span class="footer-hint">未变化文件仅统计，不进入列表。</span>
+              <div class="action-row">
+                <button
+                  class="btn small"
+                  type="button"
+                  :disabled="store.state.resultPage <= 1"
+                  @click="store.previousResultPage"
+                >
+                  上一页
+                </button>
+                <button
+                  class="btn small"
+                  type="button"
+                  :disabled="store.state.resultPage >= store.totalResultPages.value"
+                  @click="store.nextResultPage"
+                >
+                  下一页
+                </button>
+              </div>
             </div>
           </div>
         </section>

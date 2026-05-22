@@ -1,19 +1,24 @@
 use crate::models::{CompareMode, CompareOptions, CompareResult, DiffFile, DiffStatus, FileInfo};
 use std::collections::{BTreeMap, BTreeSet};
 
-pub fn compare_maps(
+pub fn compare_maps<F>(
     old_files: &BTreeMap<String, FileInfo>,
     new_files: &BTreeMap<String, FileInfo>,
     options: &CompareOptions,
-) -> CompareResult {
+    mut on_progress: F,
+) -> CompareResult
+where
+    F: FnMut(usize, usize),
+{
     let mut result = CompareResult::default();
     let keys: BTreeSet<String> = old_files
         .keys()
         .chain(new_files.keys())
         .cloned()
         .collect();
+    let total = keys.len();
 
-    for path in keys {
+    for (index, path) in keys.into_iter().enumerate() {
         match (old_files.get(&path), new_files.get(&path)) {
             (None, Some(new_file)) => result.added.push(DiffFile {
                 path,
@@ -47,6 +52,8 @@ pub fn compare_maps(
             }
             (None, None) => {}
         }
+
+        on_progress(index + 1, total);
     }
 
     result

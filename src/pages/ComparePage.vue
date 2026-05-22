@@ -116,7 +116,9 @@ onMounted(async () => {
           :mode-label="store.currentModeLabel.value"
           :include-count="store.state.compareForm.includeExtInput ? store.state.compareForm.includeExtInput.split(',').filter(Boolean).length : 0"
           :ignore-count="store.state.compareForm.ignoreDirInput ? store.state.compareForm.ignoreDirInput.split(',').filter(Boolean).length : 0"
+          :recent-comparisons="store.recentComparisons.value"
           @select="store.applyPreset"
+          @select-recent="store.applyRecentComparison"
         />
       </aside>
     </section>

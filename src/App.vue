@@ -53,6 +53,31 @@ onMounted(() => {
       </transition>
     </teleport>
 
+    <teleport to="body">
+      <transition name="progress-fade">
+        <div v-if="store.state.compareProgress.visible" class="progress-overlay" aria-live="polite">
+          <div class="progress-card">
+            <div class="progress-header">
+              <strong>正在比较文件夹</strong>
+              <span>{{ store.state.compareProgress.percent }}%</span>
+            </div>
+            <div class="progress-track">
+              <div
+                class="progress-fill"
+                :style="{ width: `${store.state.compareProgress.percent}%` }"
+              ></div>
+            </div>
+            <div class="progress-copy">
+              {{ store.state.compareProgress.message }}
+              <template v-if="store.state.compareProgress.total > 0">
+                （{{ store.state.compareProgress.current }} / {{ store.state.compareProgress.total }}）
+              </template>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </teleport>
+
     <main class="main">
       <component :is="currentPageComponent" />
     </main>

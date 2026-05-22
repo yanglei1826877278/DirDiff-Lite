@@ -71,6 +71,7 @@ export function createDefaultConfig(): AppConfig {
     defaultIgnoreDirs: [...DEFAULT_IGNORE_DIRS],
     defaultCompareMode: "hash",
     defaultExportFileName: DEFAULT_EXPORT_FILE_NAME,
+    recentComparisons: [],
   };
 }
 

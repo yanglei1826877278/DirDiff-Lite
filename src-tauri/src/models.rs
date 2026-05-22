@@ -70,6 +70,7 @@ pub struct AppConfig {
     pub default_ignore_dirs: Vec<String>,
     pub default_compare_mode: CompareMode,
     pub default_export_file_name: String,
+    pub recent_comparisons: Vec<RecentComparison>,
 }
 
 impl Default for AppConfig {
@@ -98,6 +99,7 @@ impl Default for AppConfig {
             ],
             default_compare_mode: CompareMode::Hash,
             default_export_file_name: "dirdiff-report.txt".into(),
+            recent_comparisons: Vec::new(),
         }
     }
 }
@@ -109,4 +111,25 @@ pub struct ExportReportRequest {
     pub old_dir: String,
     pub new_dir: String,
     pub result: CompareResult,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CompareProgress {
+    pub stage: String,
+    pub current: usize,
+    pub total: usize,
+    pub percent: u8,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentComparison {
+    pub old_dir: String,
+    pub new_dir: String,
+    pub compare_mode: CompareMode,
+    pub include_exts: Vec<String>,
+    pub ignore_dirs: Vec<String>,
+    pub compared_at: String,
 }

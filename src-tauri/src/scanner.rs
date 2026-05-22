@@ -3,12 +3,12 @@ use crate::models::{CompareMode, CompareOptions, FileInfo};
 use std::{
     collections::{BTreeMap, HashSet},
     fs,
-    path::Path,
+    path::{Path, PathBuf},
     time::UNIX_EPOCH,
 };
 use walkdir::{DirEntry, WalkDir};
 
-pub fn scan_directory(root: &Path, options: &CompareOptions) -> Result<BTreeMap<String, FileInfo>, String> {
+pub fn collect_candidate_files(root: &Path, options: &CompareOptions) -> Result<Vec<PathBuf>, String> {
     if !root.exists() {
         return Err(format!("目录不存在: {}", root.display()));
     }
@@ -19,8 +19,7 @@ pub fn scan_directory(root: &Path, options: &CompareOptions) -> Result<BTreeMap<
 
     let include_exts = normalize_extensions(&options.include_exts);
     let ignore_dirs = normalize_dir_names(&options.ignore_dirs);
-    let should_hash = matches!(options.compare_mode, CompareMode::Hash);
-    let mut files = BTreeMap::new();
+    let mut files = Vec::new();
 
     for entry in WalkDir::new(root)
         .into_iter()
@@ -33,8 +32,6 @@ pub fn scan_directory(root: &Path, options: &CompareOptions) -> Result<BTreeMap<
         }
 
         let absolute_path = entry.path().to_path_buf();
-        let metadata = fs::metadata(&absolute_path)
-            .map_err(|error| format!("读取文件信息失败 {}: {}", absolute_path.display(), error))?;
         let ext = normalize_extension(
             absolute_path
                 .extension()
@@ -45,6 +42,35 @@ pub fn scan_directory(root: &Path, options: &CompareOptions) -> Result<BTreeMap<
         if !include_exts.is_empty() && !include_exts.contains(&ext) {
             continue;
         }
+
+        files.push(absolute_path);
+    }
+
+    Ok(files)
+}
+
+pub fn build_file_map<F>(
+    root: &Path,
+    files: &[PathBuf],
+    options: &CompareOptions,
+    mut on_progress: F,
+) -> Result<BTreeMap<String, FileInfo>, String>
+where
+    F: FnMut(usize, usize),
+{
+    let should_hash = matches!(options.compare_mode, CompareMode::Hash);
+    let total = files.len();
+    let mut result = BTreeMap::new();
+
+    for (index, absolute_path) in files.iter().enumerate() {
+        let metadata = fs::metadata(absolute_path)
+            .map_err(|error| format!("读取文件信息失败 {}: {}", absolute_path.display(), error))?;
+        let ext = normalize_extension(
+            absolute_path
+                .extension()
+                .and_then(|value| value.to_str())
+                .unwrap_or_default(),
+        );
 
         let relative_path = normalize_relative_path(
             absolute_path
@@ -59,12 +85,12 @@ pub fn scan_directory(root: &Path, options: &CompareOptions) -> Result<BTreeMap<
             .map(|duration| duration.as_secs());
 
         let hash = if should_hash {
-            Some(compute_file_hash(&absolute_path)?)
+            Some(compute_file_hash(absolute_path)?)
         } else {
             None
         };
 
-        files.insert(
+        result.insert(
             relative_path.clone(),
             FileInfo {
                 relative_path,
@@ -75,9 +101,11 @@ pub fn scan_directory(root: &Path, options: &CompareOptions) -> Result<BTreeMap<
                 hash,
             },
         );
+
+        on_progress(index + 1, total);
     }
 
-    Ok(files)
+    Ok(result)
 }
 
 fn should_visit(entry: &DirEntry, ignore_dirs: &HashSet<String>) -> bool {

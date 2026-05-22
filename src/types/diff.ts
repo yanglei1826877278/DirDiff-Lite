@@ -3,7 +3,6 @@ export type CompareMode = "fast" | "hash";
 export type DiffStatus = "added" | "deleted" | "modified";
 export type ResultFilter = "all" | DiffStatus;
 export type BannerTone = "info" | "success" | "error";
-export type ResultSort = "path-asc" | "path-desc" | "status" | "ext";
 export type FolderDropTarget = "oldDir" | "newDir" | null;
 
 export interface DiffFile {
@@ -36,6 +35,7 @@ export interface AppConfig {
   defaultIgnoreDirs: string[];
   defaultCompareMode: CompareMode;
   defaultExportFileName: string;
+  recentComparisons: RecentComparison[];
 }
 
 export interface Preset {
@@ -72,4 +72,22 @@ export interface ExportReportRequest {
 export interface BannerState {
   tone: BannerTone;
   text: string;
+}
+
+export interface CompareProgressState {
+  stage: string;
+  current: number;
+  total: number;
+  percent: number;
+  message: string;
+  visible: boolean;
+}
+
+export interface RecentComparison {
+  oldDir: string;
+  newDir: string;
+  compareMode: CompareMode;
+  includeExts: string[];
+  ignoreDirs: string[];
+  comparedAt: string;
 }
