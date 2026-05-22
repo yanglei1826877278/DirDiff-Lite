@@ -66,6 +66,11 @@ pub fn copy_file_to_clipboard(path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+pub fn copy_files_to_clipboard(paths: Vec<String>) -> Result<(), String> {
+    clipboard::copy_files_to_clipboard(&paths)
+}
+
+#[tauri::command]
 pub fn load_config(app: AppHandle) -> Result<AppConfig, String> {
     config::load_config(&app)
 }

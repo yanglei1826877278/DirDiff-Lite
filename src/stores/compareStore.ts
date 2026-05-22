@@ -162,7 +162,12 @@ const state = reactive({
   customExtInput: "",
   searchQuery: "",
   resultPage: 1,
+  selectedFileKeys: [] as string[],
 });
+
+function getFileKey(file: DiffFile): string {
+  return `${file.status}:${file.path}`;
+}
 
 const allChanges = computed<DiffFile[]>(() => {
   if (!state.result) {
@@ -245,6 +250,24 @@ const paginatedFiles = computed(() => {
   return filteredFiles.value.slice(start, start + RESULT_PAGE_SIZE);
 });
 
+const selectedFiles = computed<DiffFile[]>(() => {
+  const selectedKeySet = new Set(state.selectedFileKeys);
+  return allChanges.value.filter((file) => selectedKeySet.has(getFileKey(file)));
+});
+
+const pageSelectableFiles = computed<DiffFile[]>(() =>
+  paginatedFiles.value.filter((file) => Boolean(file.absolutePath?.trim())),
+);
+
+const allPageSelected = computed(() => {
+  const selectable = pageSelectableFiles.value;
+  if (selectable.length === 0) {
+    return false;
+  }
+
+  return selectable.every((file) => state.selectedFileKeys.includes(getFileKey(file)));
+});
+
 function setBanner(tone: BannerState["tone"], text: string, duration = 3600): void {
   state.banner = { tone, text };
 
@@ -268,6 +291,10 @@ function setPage(page: PageId): void {
   if (page === "settings") {
     state.settingsDraft = createSettingsDraft(state.config);
   }
+}
+
+function clearSelectedFiles(): void {
+  state.selectedFileKeys = [];
 }
 
 function swapFolders(): void {
@@ -445,6 +472,7 @@ async function runCompare(): Promise<void> {
     state.extPickerValue = "";
     state.searchQuery = "";
     state.resultPage = 1;
+    state.selectedFileKeys = [];
     state.page = "result";
     await saveRecentComparison(options);
     const total = result.added.length + result.deleted.length + result.modified.length;
@@ -577,6 +605,52 @@ async function copyFileToClipboard(file: DiffFile): Promise<void> {
   }
 }
 
+function toggleFileSelection(file: DiffFile): void {
+  if (!file.absolutePath?.trim()) {
+    setBanner("error", "当前文件没有可用的绝对路径，暂时不能加入复制选择。");
+    return;
+  }
+
+  const key = getFileKey(file);
+  state.selectedFileKeys = state.selectedFileKeys.includes(key)
+    ? state.selectedFileKeys.filter((item) => item !== key)
+    : [...state.selectedFileKeys, key];
+}
+
+function toggleSelectAllOnPage(): void {
+  const selectable = pageSelectableFiles.value;
+  if (selectable.length === 0) {
+    setBanner("error", "当前页没有可加入复制选择的文件。");
+    return;
+  }
+
+  const selectableKeys = selectable.map(getFileKey);
+  if (allPageSelected.value) {
+    state.selectedFileKeys = state.selectedFileKeys.filter((key) => !selectableKeys.includes(key));
+    return;
+  }
+
+  state.selectedFileKeys = unique([...state.selectedFileKeys, ...selectableKeys]);
+}
+
+async function copySelectedFilesToClipboard(): Promise<void> {
+  const files = selectedFiles.value.filter((file) => Boolean(file.absolutePath?.trim()));
+
+  if (files.length === 0) {
+    setBanner("error", "先勾选至少一个可复制的文件。");
+    return;
+  }
+
+  try {
+    await invoke("copy_files_to_clipboard", {
+      paths: files.map((file) => file.absolutePath as string),
+    });
+    setBanner("success", `已复制 ${files.length} 个文件，可直接到资源管理器里粘贴。`);
+  } catch (error) {
+    setBanner("error", `批量复制文件失败：${toErrorMessage(error)}`);
+  }
+}
+
 async function revealFileInFolder(file: DiffFile): Promise<void> {
   if (!file.absolutePath?.trim()) {
     setBanner("error", "当前文件没有可用的绝对路径。");
@@ -651,6 +725,7 @@ function resetResultFilters(): void {
   state.customExtInput = "";
   state.searchQuery = "";
   state.resultPage = 1;
+  state.selectedFileKeys = [];
 }
 
 async function addCustomFilterExt(): Promise<void> {
@@ -770,6 +845,8 @@ const store = {
   compareValidationMessage,
   filteredFiles,
   paginatedFiles,
+  selectedFiles,
+  allPageSelected,
   availableExtensions,
   resultCounts,
   currentModeLabel,
@@ -794,9 +871,13 @@ const store = {
   copyPath,
   copyFilePathWithChoice,
   copyFileToClipboard,
+  copySelectedFilesToClipboard,
   copyCurrentList,
   copyAddedAndModified,
   revealFileInFolder,
+  toggleFileSelection,
+  toggleSelectAllOnPage,
+  clearSelectedFiles,
   getFilterCount,
   resetResultFilters,
   addCustomFilterExt,

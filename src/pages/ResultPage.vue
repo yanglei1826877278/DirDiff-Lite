@@ -129,6 +129,14 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
                 <button
                   class="btn"
                   type="button"
+                  :disabled="store.selectedFiles.value.length === 0"
+                  @click="store.copySelectedFilesToClipboard"
+                >
+                  复制所选文件
+                </button>
+                <button
+                  class="btn"
+                  type="button"
                   :disabled="store.filteredFiles.value.length === 0"
                   @click="store.copyCurrentList"
                 >
@@ -159,18 +167,42 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
                 placeholder="搜索路径，例如 UserService、order、.jsp"
               />
               <div class="action-row">
+                <button
+                  class="btn"
+                  type="button"
+                  :disabled="store.paginatedFiles.value.length === 0"
+                  @click="store.toggleSelectAllOnPage"
+                >
+                  {{ store.allPageSelected.value ? "取消本页全选" : "全选本页" }}
+                </button>
+                <button
+                  class="btn"
+                  type="button"
+                  :disabled="store.selectedFiles.value.length === 0"
+                  @click="store.clearSelectedFiles"
+                >
+                  清空选择
+                </button>
                 <button class="btn" type="button" @click="store.resetResultFilters">清空筛选</button>
                 <button class="btn" type="button" @click="store.setPage('compare')">重新比较</button>
                 <button class="btn primary" type="button" @click="store.exportReport">导出清单</button>
               </div>
             </div>
 
+            <div class="selection-summary">
+              已选择 {{ store.selectedFiles.value.length }} 个文件，可批量复制到资源管理器。
+            </div>
+
             <div class="result-table-area">
               <ResultTable
                 :files="store.paginatedFiles.value"
+                :selected-keys="store.state.selectedFileKeys"
+                :all-page-selected="store.allPageSelected.value"
                 @copy-path="store.copyFilePathWithChoice"
                 @copy-file="store.copyFileToClipboard"
                 @reveal="store.revealFileInFolder"
+                @toggle-select="store.toggleFileSelection"
+                @toggle-select-all="store.toggleSelectAllOnPage"
               />
             </div>
 

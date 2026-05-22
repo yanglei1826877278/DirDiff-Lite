@@ -17,6 +17,7 @@ pub fn run() {
             commands::compare_folders,
             commands::export_txt_report,
             commands::copy_file_to_clipboard,
+            commands::copy_files_to_clipboard,
             commands::load_config,
             commands::save_config
         ])
