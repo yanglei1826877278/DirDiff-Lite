@@ -1,26 +1,46 @@
 # DirDiff Lite
 
-DirDiff Lite is a lightweight desktop tool for comparing two folders.
+DirDiff Lite 是一个本地运行的轻量级文件夹差异比较工具。
 
-## Features
+它专门用来比较两个项目目录之间的文件变化，帮助你快速找出新增、删除和修改的文件。  
+这个工具不追求复杂，不替代 Git，也不做项目管理，只把“目录差异比较”这件事做得简单、顺手、够用。
 
-- Compare two folders
-- Detect added, deleted, and modified files
-- Filter files by extension
-- Ignore specific directories
-- Copy changed file paths
-- Export a TXT report
-- Save default comparison settings
-- Local-first, no account, no upload
+## 适用场景
 
-## Tech Stack
+- 比较新旧两个项目目录
+- 发布前核对本次更新到底改了哪些文件
+- 老项目没有 Git，或者不方便直接用 Git 查看差异
+- 比较 Java / JSP / Vue / 静态网站等项目目录
+- 复制发布清单给部署、测试或同事确认
+
+## 功能
+
+- 选择旧文件夹和新文件夹进行比较
+- 按相对路径识别同一个文件
+- 识别新增、删除、修改文件
+- 按文件后缀过滤
+- 忽略指定目录
+- 搜索和筛选变化文件
+- 复制相对路径或完整路径
+- 在文件夹中显示目标文件
+- 导出 TXT 报告
+- 保存默认配置和最近比较记录
+
+## 设计原则
+
+- 本地优先：不上传文件，不依赖服务端
+- 自用优先：围绕真实发布和维护场景设计
+- 简单克制：避免堆功能，只保留高频能力
+- 开源友好：结构清晰，方便维护和继续扩展
+
+## 技术栈
 
 - Tauri
 - Vue 3
 - TypeScript
 - Rust
 
-## Development
+## 开发
 
 ```bash
 npm install

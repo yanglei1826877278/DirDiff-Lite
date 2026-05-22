@@ -991,7 +991,8 @@ select:focus {
 }
 
 .result-table-area {
-  min-height: 320px;
+  height: 560px;
+  min-height: 560px;
   max-height: 560px;
   overflow: hidden;
 }
@@ -1008,15 +1009,11 @@ select:focus {
 }
 
 .table-wrap {
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: #fffdf8;
   height: 100%;
-}
-
-.table-wrap:has(table) {
-  overflow: auto;
 }
 
 table {
