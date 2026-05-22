@@ -9,6 +9,7 @@ export type FolderDropTarget = "oldDir" | "newDir" | null;
 export interface DiffFile {
   path: string;
   ext: string;
+  absolutePath?: string | null;
   oldSize?: number | null;
   newSize?: number | null;
   status: DiffStatus;

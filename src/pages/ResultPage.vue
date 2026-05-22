@@ -122,7 +122,11 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
               </div>
             </div>
 
-            <ResultTable :files="store.filteredFiles.value" @copy="store.copyPath" />
+            <ResultTable
+              :files="store.filteredFiles.value"
+              @copy="store.copyFileWithChoice"
+              @reveal="store.revealFileInFolder"
+            />
 
             <div class="footer-line">
               <span>

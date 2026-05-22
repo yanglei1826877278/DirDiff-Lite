@@ -6,7 +6,8 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  copy: [path: string];
+  copy: [file: DiffFile];
+  reveal: [file: DiffFile];
 }>();
 </script>
 
@@ -38,7 +39,10 @@ const emit = defineEmits<{
           <td><span class="path">{{ file.path }}</span></td>
           <td>{{ file.ext || "-" }}</td>
           <td>
-            <button class="btn small" type="button" @click="emit('copy', file.path)">复制</button>
+            <div class="row-actions">
+              <button class="btn small" type="button" @click="emit('copy', file)">复制</button>
+              <button class="btn small" type="button" @click="emit('reveal', file)">显示</button>
+            </div>
           </td>
         </tr>
       </tbody>

@@ -846,6 +846,12 @@ select:focus {
   gap: 8px;
 }
 
+.row-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .table-wrap {
   overflow: hidden;
   border: 1px solid var(--line);

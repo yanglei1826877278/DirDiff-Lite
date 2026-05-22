@@ -18,6 +18,7 @@ pub fn compare_maps(
             (None, Some(new_file)) => result.added.push(DiffFile {
                 path,
                 ext: new_file.ext.clone(),
+                absolute_path: Some(new_file.absolute_path.clone()),
                 old_size: None,
                 new_size: Some(new_file.size),
                 status: DiffStatus::Added,
@@ -25,6 +26,7 @@ pub fn compare_maps(
             (Some(old_file), None) => result.deleted.push(DiffFile {
                 path,
                 ext: old_file.ext.clone(),
+                absolute_path: Some(old_file.absolute_path.clone()),
                 old_size: Some(old_file.size),
                 new_size: None,
                 status: DiffStatus::Deleted,
@@ -34,6 +36,7 @@ pub fn compare_maps(
                     result.modified.push(DiffFile {
                         path,
                         ext: new_file.ext.clone(),
+                        absolute_path: Some(new_file.absolute_path.clone()),
                         old_size: Some(old_file.size),
                         new_size: Some(new_file.size),
                         status: DiffStatus::Modified,

@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
-import { open, save } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { ask, open, save } from "@tauri-apps/plugin-dialog";
+import { openPath, revealItemInDir } from "@tauri-apps/plugin-opener";
 import { computed, reactive } from "vue";
 import { PRESETS, compareModeLabel, createDefaultConfig } from "../data/presets";
 import type {
@@ -491,6 +491,36 @@ async function copyPath(path: string): Promise<void> {
   }
 }
 
+async function copyFileWithChoice(file: DiffFile): Promise<void> {
+  const useFullPath = await ask(
+    `要复制这个文件的完整路径吗？\n\n选择“是”复制完整路径。\n选择“否”复制相对路径。`,
+    {
+      title: "复制路径",
+      kind: "info",
+      okLabel: "复制完整路径",
+      cancelLabel: "复制相对路径",
+    },
+  );
+
+  const targetPath =
+    useFullPath && file.absolutePath?.trim().length ? file.absolutePath : file.path;
+
+  await copyPath(targetPath);
+}
+
+async function revealFileInFolder(file: DiffFile): Promise<void> {
+  if (!file.absolutePath?.trim()) {
+    setBanner("error", "当前文件没有可用的绝对路径。");
+    return;
+  }
+
+  try {
+    await revealItemInDir(file.absolutePath);
+  } catch (error) {
+    setBanner("error", `在文件夹中显示失败：${toErrorMessage(error)}`);
+  }
+}
+
 async function copyCurrentList(): Promise<void> {
   if (filteredFiles.value.length === 0) {
     setBanner("error", "当前列表没有可复制的路径。");
@@ -588,8 +618,10 @@ const store = {
   resetSettingsDraft,
   exportReport,
   copyPath,
+  copyFileWithChoice,
   copyCurrentList,
   copyAddedAndModified,
+  revealFileInFolder,
   getFilterCount,
   resetResultFilters,
   openReadme,

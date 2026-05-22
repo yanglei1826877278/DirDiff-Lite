@@ -13,6 +13,7 @@ pub enum DiffStatus {
 pub struct DiffFile {
     pub path: String,
     pub ext: String,
+    pub absolute_path: Option<String>,
     pub old_size: Option<u64>,
     pub new_size: Option<u64>,
     pub status: DiffStatus,
