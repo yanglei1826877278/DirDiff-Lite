@@ -36,6 +36,7 @@ export interface AppConfig {
   defaultCompareMode: CompareMode;
   defaultExportFileName: string;
   recentComparisons: RecentComparison[];
+  customFilterExts: string[];
 }
 
 export interface Preset {

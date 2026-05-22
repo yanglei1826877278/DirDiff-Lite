@@ -72,12 +72,55 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
 
             <div class="field field-space">
               <label>后缀过滤</label>
-              <select v-model="store.state.extFilter">
-                <option value="all">全部后缀</option>
-                <option v-for="ext in store.availableExtensions.value" :key="ext" :value="ext">
-                  {{ ext }}
-                </option>
-              </select>
+              <div class="inline-filter-row">
+                <select v-model="store.state.extPickerValue">
+                  <option value="">选择一个后缀</option>
+                  <option v-for="ext in store.availableExtensions.value" :key="ext" :value="ext">
+                    {{ ext }}
+                  </option>
+                </select>
+                <button class="btn" type="button" @click="() => store.addSelectedExtFilter()">加入筛选</button>
+              </div>
+              <div class="selected-ext-list">
+                <button
+                  v-for="ext in store.state.selectedExtFilters"
+                  :key="ext"
+                  class="selected-ext-tag"
+                  type="button"
+                  @click="store.removeSelectedExtFilter(ext)"
+                >
+                  <span>{{ ext }}</span>
+                  <span class="selected-ext-remove">x</span>
+                </button>
+              </div>
+              <div class="hint">
+                {{
+                  store.state.selectedExtFilters.length === 0
+                    ? "未选择后缀时，默认显示全部后缀。"
+                    : `当前已选择 ${store.state.selectedExtFilters.length} 个后缀。`
+                }}
+              </div>
+              <button
+                v-if="store.state.selectedExtFilters.length > 0"
+                class="btn subtle-btn"
+                type="button"
+                @click="store.clearSelectedExtFilters"
+              >
+                清空已选后缀
+              </button>
+            </div>
+
+            <div class="field field-space">
+              <label>自定义后缀</label>
+              <div class="inline-filter-row">
+                <input
+                  v-model="store.state.customExtInput"
+                  placeholder="例如 .jsp 或 vue"
+                  @keydown.enter.prevent="store.addCustomFilterExt"
+                />
+                <button class="btn" type="button" @click="store.addCustomFilterExt">添加并保存</button>
+              </div>
+              <div class="hint">添加后会保存在本机，并自动出现在上面的后缀过滤列表里。</div>
             </div>
 
             <div class="summary">

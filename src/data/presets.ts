@@ -72,6 +72,7 @@ export function createDefaultConfig(): AppConfig {
     defaultCompareMode: "hash",
     defaultExportFileName: DEFAULT_EXPORT_FILE_NAME,
     recentComparisons: [],
+    customFilterExts: [],
   };
 }
 

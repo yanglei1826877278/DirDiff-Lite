@@ -66,6 +66,9 @@ function sanitizeConfig(config?: Partial<AppConfig> | null): AppConfig {
     recentComparisons: Array.isArray(config?.recentComparisons)
       ? config.recentComparisons
       : fallback.recentComparisons,
+    customFilterExts: Array.isArray(config?.customFilterExts)
+      ? parseCsvInput(config.customFilterExts.join(","), "ext")
+      : fallback.customFilterExts,
   };
 }
 
@@ -154,7 +157,9 @@ const state = reactive({
   } as CompareProgressState,
   hasCompared: false,
   resultFilter: "all" as ResultFilter,
-  extFilter: "all",
+  selectedExtFilters: [] as string[],
+  extPickerValue: "",
+  customExtInput: "",
   searchQuery: "",
   resultPage: 1,
 });
@@ -195,7 +200,8 @@ const filteredFiles = computed<DiffFile[]>(() => {
   const search = state.searchQuery.trim().toLowerCase();
   const matched = allChanges.value.filter((file) => {
     const matchesStatus = state.resultFilter === "all" || file.status === state.resultFilter;
-    const matchesExt = state.extFilter === "all" || file.ext === state.extFilter;
+    const matchesExt =
+      state.selectedExtFilters.length === 0 || state.selectedExtFilters.includes(file.ext);
     const matchesSearch =
       search.length === 0 ||
       file.path.toLowerCase().includes(search) ||
@@ -209,9 +215,8 @@ const filteredFiles = computed<DiffFile[]>(() => {
 
 const availableExtensions = computed<string[]>(() =>
   unique(
-    allChanges.value
-      .map((file) => file.ext)
-      .filter((ext) => ext && ext.trim().length > 0)
+    [...allChanges.value.map((file) => file.ext), ...state.config.customFilterExts]
+      .filter((ext) => typeof ext === "string" && ext.trim().length > 0)
       .sort((left, right) => left.localeCompare(right, "zh-CN")),
   ),
 );
@@ -327,6 +332,7 @@ function buildConfigFromDraft(draft: SettingsDraft): AppConfig {
     defaultCompareMode: draft.compareMode,
     defaultExportFileName: draft.exportFileName.trim(),
     recentComparisons: state.config.recentComparisons,
+    customFilterExts: state.config.customFilterExts,
   });
 }
 
@@ -435,7 +441,8 @@ async function runCompare(): Promise<void> {
     state.lastCompareOptions = options;
     state.hasCompared = true;
     state.resultFilter = "all";
-    state.extFilter = "all";
+    state.selectedExtFilters = [];
+    state.extPickerValue = "";
     state.searchQuery = "";
     state.resultPage = 1;
     state.page = "result";
@@ -625,8 +632,63 @@ function getFilterCount(filter: ResultFilter): number {
 
 function resetResultFilters(): void {
   state.resultFilter = "all";
-  state.extFilter = "all";
+  state.selectedExtFilters = [];
+  state.extPickerValue = "";
+  state.customExtInput = "";
   state.searchQuery = "";
+  state.resultPage = 1;
+}
+
+async function addCustomFilterExt(): Promise<void> {
+  const normalized = normalizeExtension(state.customExtInput);
+
+  if (!normalized) {
+    setBanner("error", "请输入有效的文件后缀，例如 .jsp 或 .vue。");
+    return;
+  }
+
+  if (state.config.customFilterExts.includes(normalized)) {
+    addSelectedExtFilter(normalized);
+    setBanner("info", `后缀 ${normalized} 已存在，已直接选中。`, 2200);
+    state.customExtInput = "";
+    return;
+  }
+
+  const config = sanitizeConfig({
+    ...state.config,
+    customFilterExts: [...state.config.customFilterExts, normalized],
+  });
+
+  await persistConfig(config);
+  addSelectedExtFilter(normalized);
+  state.customExtInput = "";
+  setBanner("success", `已添加并保存自定义后缀 ${normalized}。`, 2400);
+}
+
+function addSelectedExtFilter(input?: string): void {
+  const normalized = normalizeExtension(input ?? state.extPickerValue);
+
+  if (!normalized) {
+    setBanner("error", "先选择一个后缀，或者输入自定义后缀。");
+    return;
+  }
+
+  if (!state.selectedExtFilters.includes(normalized)) {
+    state.selectedExtFilters = [...state.selectedExtFilters, normalized];
+  }
+
+  state.extPickerValue = "";
+  state.resultPage = 1;
+}
+
+function removeSelectedExtFilter(ext: string): void {
+  state.selectedExtFilters = state.selectedExtFilters.filter((item) => item !== ext);
+  state.resultPage = 1;
+}
+
+function clearSelectedExtFilters(): void {
+  state.selectedExtFilters = [];
+  state.extPickerValue = "";
   state.resultPage = 1;
 }
 
@@ -722,6 +784,10 @@ const store = {
   revealFileInFolder,
   getFilterCount,
   resetResultFilters,
+  addCustomFilterExt,
+  addSelectedExtFilter,
+  removeSelectedExtFilter,
+  clearSelectedExtFilters,
   previousResultPage,
   nextResultPage,
   applyRecentComparison,

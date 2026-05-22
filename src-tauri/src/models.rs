@@ -71,6 +71,7 @@ pub struct AppConfig {
     pub default_compare_mode: CompareMode,
     pub default_export_file_name: String,
     pub recent_comparisons: Vec<RecentComparison>,
+    pub custom_filter_exts: Vec<String>,
 }
 
 impl Default for AppConfig {
@@ -100,6 +101,7 @@ impl Default for AppConfig {
             default_compare_mode: CompareMode::Hash,
             default_export_file_name: "dirdiff-report.txt".into(),
             recent_comparisons: Vec::new(),
+            custom_filter_exts: Vec::new(),
         }
     }
 }

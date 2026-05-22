@@ -652,6 +652,42 @@ select:focus {
   margin-top: 16px;
 }
 
+.inline-filter-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.selected-ext-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.selected-ext-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid rgba(201, 100, 66, 0.36);
+  border-radius: 999px;
+  background: rgba(242, 223, 214, 0.72);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selected-ext-remove {
+  opacity: 0.72;
+  font-weight: 800;
+}
+
+.subtle-btn {
+  margin-top: 10px;
+}
+
 .hint {
   margin-top: 7px;
   color: var(--muted);
@@ -950,15 +986,14 @@ select:focus {
 
 .result-panel .panel-body {
   display: flex;
-  flex: 1;
   min-height: 0;
   flex-direction: column;
 }
 
 .result-table-area {
-  flex: 1;
-  min-height: 0;
-  max-height: calc(100vh - 320px);
+  min-height: 320px;
+  max-height: 560px;
+  overflow: hidden;
 }
 
 .stack-actions {
