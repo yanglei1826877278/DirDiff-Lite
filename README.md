@@ -1,10 +1,10 @@
 # DirDiff Lite
 
-DirDiff Lite is a lightweight local desktop tool for comparing two folders and listing added, deleted, and modified files.
+DirDiff Lite is a lightweight desktop tool for comparing two folders.
 
 ## Features
 
-- Compare two folders by relative path
+- Compare two folders
 - Detect added, deleted, and modified files
 - Filter files by extension
 - Ignore specific directories
@@ -15,11 +15,10 @@ DirDiff Lite is a lightweight local desktop tool for comparing two folders and l
 
 ## Tech Stack
 
-- Tauri 2
+- Tauri
 - Vue 3
 - TypeScript
 - Rust
-- Vite
 
 ## Development
 

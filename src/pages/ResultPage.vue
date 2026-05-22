@@ -83,7 +83,14 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
             <div class="summary">
               <div class="summary-title">快速操作</div>
               <div class="stack-actions">
-                <button class="btn" type="button" @click="store.copyCurrentList">复制当前列表</button>
+                <button
+                  class="btn"
+                  type="button"
+                  :disabled="store.filteredFiles.value.length === 0"
+                  @click="store.copyCurrentList"
+                >
+                  复制当前列表
+                </button>
                 <button class="btn" type="button" @click="store.copyAddedAndModified">
                   复制新增 + 修改
                 </button>
@@ -109,6 +116,7 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
                 placeholder="搜索路径，例如 UserService、order、.jsp"
               />
               <div class="action-row">
+                <button class="btn" type="button" @click="store.resetResultFilters">清空筛选</button>
                 <button class="btn" type="button" @click="store.setPage('compare')">重新比较</button>
                 <button class="btn primary" type="button" @click="store.exportReport">导出清单</button>
               </div>

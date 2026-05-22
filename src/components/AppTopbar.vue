@@ -4,11 +4,12 @@ defineProps<{
   title: string;
   subtitle: string;
   busy?: boolean;
+  compact?: boolean;
 }>();
 </script>
 
 <template>
-  <header class="topbar">
+  <header :class="['topbar', { compact }]">
     <div>
       <div class="eyebrow">{{ eyebrow }}</div>
       <h1>{{ title }}</h1>

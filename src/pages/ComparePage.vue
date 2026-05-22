@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from "vue";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import CompareRules from "../components/CompareRules.vue";
 import FolderPicker from "../components/FolderPicker.vue";
 import AppTopbar from "../components/AppTopbar.vue";
@@ -6,6 +8,29 @@ import PresetPanel from "../components/PresetPanel.vue";
 import { useCompareStore } from "../stores/compareStore";
 
 const store = useCompareStore();
+
+onMounted(async () => {
+  const appWindow = getCurrentWindow();
+  const unlisten = await appWindow.onDragDropEvent((event) => {
+    if (event.payload.type === "over") {
+      store.markFolderDropTarget();
+      return;
+    }
+
+    if (event.payload.type === "drop") {
+      void store.handleFolderDrop(event.payload.paths);
+      return;
+    }
+
+    if (event.payload.type === "leave") {
+      store.cancelFolderDrop();
+    }
+  });
+
+  onUnmounted(() => {
+    unlisten();
+  });
+});
 </script>
 
 <template>
@@ -18,7 +43,12 @@ const store = useCompareStore();
     >
       <template #actions>
         <button class="btn" type="button" @click="store.clearCompareForm">清空</button>
-        <button class="btn primary" type="button" :disabled="store.state.isComparing" @click="store.runCompare">
+        <button
+          class="btn primary"
+          type="button"
+          :disabled="store.state.isComparing || !store.canCompare.value"
+          @click="store.runCompare"
+        >
           {{ store.state.isComparing ? "比较中..." : "开始比较" }}
         </button>
       </template>
@@ -42,7 +72,8 @@ const store = useCompareStore();
                 icon-text="旧"
                 :value="store.state.compareForm.oldDir"
                 placeholder="例如 D:\\workspace\\erp-old"
-                hint="例如 D:\\workspace\\erp-old"
+                hint="例如 D:\\project-old"
+                :is-drop-active="store.state.folderDropTarget === 'oldDir'"
                 @choose="store.pickFolder('oldDir')"
                 @clear="store.clearFolder('oldDir')"
                 @update:value="store.state.compareForm.oldDir = $event"
@@ -54,7 +85,8 @@ const store = useCompareStore();
                 icon-text="新"
                 :value="store.state.compareForm.newDir"
                 placeholder="例如 D:\\workspace\\erp-new"
-                hint="例如 D:\\workspace\\erp-new"
+                hint="例如 D:\\project-new"
+                :is-drop-active="store.state.folderDropTarget === 'newDir'"
                 @choose="store.pickFolder('newDir')"
                 @clear="store.clearFolder('newDir')"
                 @update:value="store.state.compareForm.newDir = $event"
@@ -68,6 +100,7 @@ const store = useCompareStore();
           :ignore-dir-input="store.state.compareForm.ignoreDirInput"
           :compare-mode="store.state.compareForm.compareMode"
           :comparing="store.state.isComparing"
+          :compare-disabled="!store.canCompare.value"
           @update:include-ext-input="store.state.compareForm.includeExtInput = $event"
           @update:ignore-dir-input="store.state.compareForm.ignoreDirInput = $event"
           @update:compare-mode="store.state.compareForm.compareMode = $event"

@@ -6,6 +6,7 @@ defineProps<{
   ignoreDirInput: string;
   compareMode: CompareMode;
   comparing: boolean;
+  compareDisabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -67,7 +68,12 @@ const emit = defineEmits<{
 
       <div class="submit-row">
         <button class="btn" type="button" @click="emit('saveDefaults')">保存为默认</button>
-        <button class="btn primary" type="button" :disabled="comparing" @click="emit('compare')">
+        <button
+          class="btn primary"
+          type="button"
+          :disabled="comparing || compareDisabled"
+          @click="emit('compare')"
+        >
           {{ comparing ? "比较中..." : "开始比较" }}
         </button>
       </div>

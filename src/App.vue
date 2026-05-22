@@ -28,16 +28,40 @@ onMounted(() => {
   <div class="app">
     <AppSidebar :current-page="store.state.page" @select="store.setPage" />
 
-    <main class="main">
-      <transition name="banner-fade">
+    <teleport to="body">
+      <transition name="toast-fade">
         <div
           v-if="store.state.banner"
-          :class="['status-banner', `is-${store.state.banner.tone}`]"
+          :class="['toast-notice', `is-${store.state.banner.tone}`]"
+          role="status"
+          aria-live="polite"
         >
-          {{ store.state.banner.text }}
+          <div class="toast-mark">
+            {{
+              store.state.banner.tone === "success"
+                ? "成"
+                : store.state.banner.tone === "error"
+                  ? "错"
+                  : "提"
+            }}
+          </div>
+          <div class="toast-copy">
+            <strong>
+              {{
+                store.state.banner.tone === "success"
+                  ? "操作成功"
+                  : store.state.banner.tone === "error"
+                    ? "出现问题"
+                    : "提示"
+              }}
+            </strong>
+            <span>{{ store.state.banner.text }}</span>
+          </div>
         </div>
       </transition>
+    </teleport>
 
+    <main class="main">
       <component :is="currentPageComponent" />
     </main>
   </div>

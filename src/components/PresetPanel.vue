@@ -42,8 +42,7 @@ const emit = defineEmits<{
         <div class="summary-title">当前规则摘要</div>
         <div class="summary-list">
           <div><span>比较方式</span><span class="value">{{ modeLabel }}</span></div>
-          <div><span>后缀数量</span><span class="value">{{ includeCount || "全部文件" }}</span></div>
-          <div><span>忽略目录</span><span class="value">{{ ignoreCount }}</span></div>
+          <div><span>显示内容</span><span class="value">只显示变化</span></div>
           <div><span>导出格式</span><span class="value">TXT</span></div>
         </div>
       </div>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DirDiff Lite - 默认设置</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">D</div>
+        <div>
+          <div class="brand-title">DirDiff Lite</div>
+          <div class="brand-subtitle">Local folder comparison</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <div class="nav-title">Workspace</div>
+        <a class="nav-item " href="./index.html"><span class="nav-dot"></span><span>开始比较</span></a>
+        <a class="nav-item " href="./result.html"><span class="nav-dot"></span><span>比较结果</span></a>
+        <a class="nav-item active" href="./settings.html"><span class="nav-dot"></span><span>默认设置</span></a>
+        <a class="nav-item " href="./about.html"><span class="nav-dot"></span><span>关于项目</span></a>
+      </nav>
+
+      <div class="sidebar-note">
+        <strong>v0.1 目标</strong>
+        <p>只做一个顺手的小工具：选两个文件夹，看新增、删除、修改，复制路径，导出 TXT。</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">Preferences</div>
+          <h1>默认设置</h1>
+          <p class="subtitle">保存常用后缀、忽略目录和比较方式。保持工具简单，但每次打开都顺手。</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn danger">恢复默认</button><button class="btn primary">保存设置</button>
+        </div>
+      </header>
+      
+<section class="layout">
+  <section class="panel">
+    <div class="panel-header">
+      <div class="panel-title">默认比较规则</div>
+      <div class="panel-desc">自用工具最重要的是下次打开不用重新填。这里保存你的常用后缀和忽略目录。</div>
+    </div>
+    <div class="panel-body">
+      <div class="setting-row">
+        <div>
+          <h3>默认后缀</h3>
+          <p>只比较你关心的代码、页面和配置文件。</p>
+        </div>
+        <textarea>.java,.jsp,.html,.css,.js,.xml,.sql,.properties,.json,.yml,.yaml</textarea>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <h3>忽略目录</h3>
+          <p>跳过构建产物、依赖目录、IDE 配置和缓存。</p>
+        </div>
+        <textarea>.git,target,node_modules,dist,build,out,bin,.idea,.vscode,logs,tmp,.cache</textarea>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <h3>比较方式</h3>
+          <p>发布前检查建议默认使用 Hash。</p>
+        </div>
+        <div class="mode-row" style="margin-top:0;">
+          <div class="mode-card">
+            <strong>快速比较</strong>
+            <span>大小 + 修改时间</span>
+          </div>
+          <div class="mode-card active">
+            <strong>精确 Hash</strong>
+            <span>读取文件内容判断</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <h3>默认导出文件名</h3>
+          <p>导出 TXT 报告时默认使用的文件名。</p>
+        </div>
+        <input value="dirdiff-report.txt" />
+      </div>
+
+      <div class="submit-row">
+        <button class="btn danger">恢复默认</button>
+        <button class="btn primary">保存设置</button>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title">内置预设</div>
+        <div class="panel-desc">这些预设可以直接复用到开始比较页。</div>
+      </div>
+      <div class="panel-body">
+        <div class="preset-list">
+          <div class="preset active">
+            <div><strong>Java / JSP 项目</strong><span>.java .jsp .html .css .js .xml .sql</span></div>
+            <div class="check"></div>
+          </div>
+          <div class="preset">
+            <div><strong>Vue / 前端项目</strong><span>.vue .ts .js .scss .json</span></div>
+            <div class="check"></div>
+          </div>
+          <div class="preset">
+            <div><strong>文本和配置文件</strong><span>.txt .md .json .xml .yml</span></div>
+            <div class="check"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div class="panel-title">本地优先</div>
+        <div class="panel-desc">不上传文件，不登录账号，不同步数据。设置也只保存在本机。</div>
+      </div>
+      <div class="panel-body">
+        <div class="summary-list">
+          <div><span>账号系统</span><span class="value">无</span></div>
+          <div><span>云同步</span><span class="value">无</span></div>
+          <div><span>网络请求</span><span class="value">无</span></div>
+        </div>
+      </div>
+    </section>
+  </aside>
+</section>
+
+    </main>
+  </div>
+</body>
+</html>

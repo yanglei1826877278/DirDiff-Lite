@@ -20,7 +20,9 @@ const navItems: Array<{ id: PageId; label: string }> = [
 <template>
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">D</div>
+      <div class="brand-mark">
+        <img class="brand-logo" src="/logo.png" alt="DirDiff Lite logo" />
+      </div>
       <div>
         <div class="brand-title">DirDiff Lite</div>
         <div class="brand-subtitle">Local folder comparison</div>

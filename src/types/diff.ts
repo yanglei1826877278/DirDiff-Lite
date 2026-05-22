@@ -3,6 +3,8 @@ export type CompareMode = "fast" | "hash";
 export type DiffStatus = "added" | "deleted" | "modified";
 export type ResultFilter = "all" | DiffStatus;
 export type BannerTone = "info" | "success" | "error";
+export type ResultSort = "path-asc" | "path-desc" | "status" | "ext";
+export type FolderDropTarget = "oldDir" | "newDir" | null;
 
 export interface DiffFile {
   path: string;

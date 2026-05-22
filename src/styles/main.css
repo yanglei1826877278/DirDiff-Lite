@@ -24,6 +24,32 @@
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(166, 79, 52, 0.58) rgba(241, 235, 226, 0.88);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(241, 235, 226, 0.82);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(241, 235, 226, 0.82);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(201, 100, 66, 0.8), rgba(166, 79, 52, 0.82));
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(201, 100, 66, 0.92), rgba(166, 79, 52, 0.95));
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 html,
@@ -83,13 +109,17 @@ button {
 .brand-mark {
   width: 40px;
   height: 40px;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
   border-radius: 11px;
-  background: linear-gradient(135deg, #221e1a, #40362e);
-  color: #fffaf2;
-  font-weight: 800;
-  letter-spacing: -0.06em;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(37, 33, 29, 0.08);
+}
+
+.brand-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-title {
@@ -156,6 +186,8 @@ button {
 
 .sidebar-note {
   margin-top: auto;
+  max-height: 200px;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(255, 250, 242, 0.75);
@@ -180,49 +212,90 @@ button {
   max-width: 1320px;
   margin: 0 auto;
   padding: 26px 42px 42px;
+  overflow: auto;
 }
 
 .page-shell {
   animation: rise-in 0.35s ease;
 }
 
-.status-banner {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: rgba(255, 250, 242, 0.92);
+.toast-notice {
+  position: fixed;
+  top: 26px;
+  right: 28px;
+  z-index: 9999;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  width: min(420px, calc(100vw - 36px));
+  padding: 14px;
+  border: 1px solid rgba(207, 197, 184, 0.9);
+  border-radius: 16px;
+  background: rgba(255, 250, 242, 0.96);
+  box-shadow: 0 20px 46px rgba(65, 50, 35, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.toast-notice.is-success {
+  border-color: rgba(79, 111, 82, 0.28);
+}
+
+.toast-notice.is-error {
+  border-color: rgba(159, 63, 53, 0.28);
+}
+
+.toast-notice.is-info {
+  border-color: rgba(201, 100, 66, 0.28);
+}
+
+.toast-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fffaf2;
+  background: linear-gradient(180deg, rgba(201, 100, 66, 0.9), rgba(166, 79, 52, 0.9));
+}
+
+.toast-notice.is-success .toast-mark {
+  background: linear-gradient(180deg, rgba(79, 111, 82, 0.92), rgba(63, 92, 66, 0.96));
+}
+
+.toast-notice.is-error .toast-mark {
+  background: linear-gradient(180deg, rgba(159, 63, 53, 0.92), rgba(131, 47, 39, 0.96));
+}
+
+.toast-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.toast-copy strong {
   font-size: 13px;
-  box-shadow: var(--shadow);
+  line-height: 1.2;
 }
 
-.status-banner.is-success {
-  border-color: rgba(79, 111, 82, 0.24);
-  background: rgba(225, 234, 219, 0.9);
-  color: #2d4a31;
+.toast-copy span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+  word-break: break-word;
 }
 
-.status-banner.is-error {
-  border-color: rgba(159, 63, 53, 0.22);
-  background: rgba(243, 222, 219, 0.92);
-  color: #7f3028;
+.toast-fade-enter-active,
+.toast-fade-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-.status-banner.is-info {
-  border-color: rgba(201, 100, 66, 0.22);
-  background: rgba(242, 223, 214, 0.92);
-  color: #7b3f2f;
-}
-
-.banner-fade-enter-active,
-.banner-fade-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.banner-fade-enter-from,
-.banner-fade-leave-to {
+.toast-fade-enter-from,
+.toast-fade-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translate3d(0, -10px, 0) scale(0.98);
 }
 
 .topbar {
@@ -402,6 +475,11 @@ h1 {
   border-color: rgba(201, 100, 66, 0.36);
 }
 
+.folder-box.is-drop-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
+}
+
 .folder-head {
   display: flex;
   align-items: center;
@@ -490,6 +568,7 @@ textarea {
   min-height: 92px;
   resize: vertical;
   line-height: 1.55;
+  scrollbar-gutter: stable;
 }
 
 input:focus,
@@ -785,6 +864,10 @@ select:focus {
   background: #fffdf8;
 }
 
+.table-wrap:has(table) {
+  overflow: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -1047,5 +1130,12 @@ tr:hover td {
 
   h1 {
     font-size: 32px;
+  }
+
+  .toast-notice {
+    top: 14px;
+    right: 14px;
+    left: 14px;
+    width: auto;
   }
 }

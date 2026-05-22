@@ -1,8 +1,17 @@
 <script setup lang="ts">
+import { openUrl } from "@tauri-apps/plugin-opener";
 import AppTopbar from "../components/AppTopbar.vue";
 import { useCompareStore } from "../stores/compareStore";
 
 const store = useCompareStore();
+
+async function openGithub(): Promise<void> {
+  try {
+    await openUrl("https://github.com/");
+  } catch (error) {
+    store.notify("error", `打开 GitHub 失败：${error instanceof Error ? error.message : "未知错误"}`);
+  }
+}
 </script>
 
 <template>
@@ -13,8 +22,8 @@ const store = useCompareStore();
       subtitle="一个本地优先、简单克制的开源文件夹差异比较工具。"
     >
       <template #actions>
-        <button class="btn" type="button" @click="store.setPage('settings')">查看设置</button>
-        <button class="btn primary" type="button" @click="store.setPage('compare')">开始比较</button>
+        <button class="btn" type="button" @click="openGithub">GitHub</button>
+        <button class="btn primary" type="button" @click="store.openReadme">查看 README</button>
       </template>
     </AppTopbar>
 
@@ -27,8 +36,8 @@ const store = useCompareStore();
       </p>
 
       <div class="about-badges">
-        <span class="about-badge">Tauri 2</span>
-        <span class="about-badge">Vue 3</span>
+        <span class="about-badge">Tauri</span>
+        <span class="about-badge">Vue</span>
         <span class="about-badge">Rust</span>
         <span class="about-badge">Local First</span>
         <span class="about-badge">No Account</span>

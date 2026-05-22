@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { computed, reactive } from "vue";
 import { PRESETS, compareModeLabel, createDefaultConfig } from "../data/presets";
 import type {
@@ -13,6 +14,8 @@ import type {
   ExportReportRequest,
   PageId,
   ResultFilter,
+  FolderDropTarget,
+  ResultSort,
   SettingsDraft,
 } from "../types/diff";
 
@@ -115,10 +118,12 @@ const state = reactive({
   compareForm: createCompareForm(initialConfig),
   settingsDraft: createSettingsDraft(initialConfig),
   activePresetId: PRESETS[0]?.id ?? "java-jsp",
+  folderDropTarget: null as FolderDropTarget,
   result: null as DiffResult | null,
   lastCompareOptions: null as CompareOptions | null,
   hasCompared: false,
   resultFilter: "all" as ResultFilter,
+  resultSort: "path-asc" as ResultSort,
   extFilter: "all",
   searchQuery: "",
 });
@@ -133,10 +138,31 @@ const allChanges = computed<DiffFile[]>(() => {
   );
 });
 
+const canCompare = computed(() => {
+  const oldDir = state.compareForm.oldDir.trim();
+  const newDir = state.compareForm.newDir.trim();
+
+  return oldDir.length > 0 && newDir.length > 0 && oldDir !== newDir;
+});
+
+const compareValidationMessage = computed(() => {
+  const oldDir = state.compareForm.oldDir.trim();
+  const newDir = state.compareForm.newDir.trim();
+
+  if (!oldDir || !newDir) {
+    return "先选择旧文件夹和新文件夹。";
+  }
+
+  if (oldDir === newDir) {
+    return "旧文件夹和新文件夹不能是同一个目录。";
+  }
+
+  return "";
+});
+
 const filteredFiles = computed<DiffFile[]>(() => {
   const search = state.searchQuery.trim().toLowerCase();
-
-  return allChanges.value.filter((file) => {
+  const matched = allChanges.value.filter((file) => {
     const matchesStatus = state.resultFilter === "all" || file.status === state.resultFilter;
     const matchesExt = state.extFilter === "all" || file.ext === state.extFilter;
     const matchesSearch =
@@ -145,6 +171,24 @@ const filteredFiles = computed<DiffFile[]>(() => {
       file.ext.toLowerCase().includes(search);
 
     return matchesStatus && matchesExt && matchesSearch;
+  });
+
+  return matched.sort((left, right) => {
+    switch (state.resultSort) {
+      case "path-desc":
+        return right.path.localeCompare(left.path, "zh-CN");
+      case "status": {
+        const statusOrder = { added: 0, modified: 1, deleted: 2 };
+        const diff = statusOrder[left.status] - statusOrder[right.status];
+        return diff !== 0 ? diff : left.path.localeCompare(right.path, "zh-CN");
+      }
+      case "ext": {
+        const diff = left.ext.localeCompare(right.ext, "zh-CN");
+        return diff !== 0 ? diff : left.path.localeCompare(right.path, "zh-CN");
+      }
+      default:
+        return left.path.localeCompare(right.path, "zh-CN");
+    }
   });
 });
 
@@ -166,6 +210,17 @@ const resultCounts = computed(() => ({
 }));
 
 const currentModeLabel = computed(() => compareModeLabel(state.compareForm.compareMode));
+const resultSummaryText = computed(() => {
+  if (!state.result) {
+    return "还没有比较结果。";
+  }
+
+  if (resultCounts.value.total === 0) {
+    return "两个目录在当前规则下没有发现变化。";
+  }
+
+  return `共发现 ${resultCounts.value.total} 个变化文件，其中新增 ${resultCounts.value.added}、删除 ${resultCounts.value.deleted}、修改 ${resultCounts.value.modified}。`;
+});
 
 function setBanner(tone: BannerState["tone"], text: string, duration = 3600): void {
   state.banner = { tone, text };
@@ -190,6 +245,50 @@ function setPage(page: PageId): void {
   if (page === "settings") {
     state.settingsDraft = createSettingsDraft(state.config);
   }
+}
+
+function swapFolders(): void {
+  const previousOld = state.compareForm.oldDir;
+  state.compareForm.oldDir = state.compareForm.newDir;
+  state.compareForm.newDir = previousOld;
+  setBanner("info", "已交换旧文件夹和新文件夹。", 2200);
+}
+
+function chooseDropTarget(): Exclude<FolderDropTarget, null> {
+  if (!state.compareForm.oldDir.trim()) {
+    return "oldDir";
+  }
+
+  if (!state.compareForm.newDir.trim()) {
+    return "newDir";
+  }
+
+  return "newDir";
+}
+
+function markFolderDropTarget(): void {
+  state.folderDropTarget = chooseDropTarget();
+}
+
+async function handleFolderDrop(paths: string[]): Promise<void> {
+  const folderPath = paths[0];
+  state.folderDropTarget = chooseDropTarget();
+
+  if (!folderPath) {
+    return;
+  }
+
+  const target = state.folderDropTarget;
+  state.compareForm[target] = folderPath;
+  setBanner(
+    "success",
+    `${target === "oldDir" ? "旧文件夹" : "新文件夹"}已通过拖拽设置。`,
+    2200,
+  );
+}
+
+function cancelFolderDrop(): void {
+  state.folderDropTarget = null;
 }
 
 function buildCompareOptions(): CompareOptions {
@@ -275,14 +374,15 @@ function clearCompareForm(): void {
     newDir: "",
   };
   state.activePresetId = PRESETS[0]?.id ?? state.activePresetId;
+  state.folderDropTarget = null;
   setBanner("info", "已清空本次比较表单。");
 }
 
 async function runCompare(): Promise<void> {
   const options = buildCompareOptions();
 
-  if (!options.oldDir || !options.newDir) {
-    setBanner("error", "请先选择旧文件夹和新文件夹。");
+  if (!canCompare.value) {
+    setBanner("error", compareValidationMessage.value || "当前比较条件不完整。");
     return;
   }
 
@@ -294,6 +394,7 @@ async function runCompare(): Promise<void> {
     state.lastCompareOptions = options;
     state.hasCompared = true;
     state.resultFilter = "all";
+    state.resultSort = "path-asc";
     state.extFilter = "all";
     state.searchQuery = "";
     state.page = "result";
@@ -444,16 +545,39 @@ function getFilterCount(filter: ResultFilter): number {
   }
 }
 
+function resetResultFilters(): void {
+  state.resultFilter = "all";
+  state.resultSort = "path-asc";
+  state.extFilter = "all";
+  state.searchQuery = "";
+}
+
+async function openReadme(): Promise<void> {
+  try {
+    await openPath("README.md");
+  } catch (error) {
+    setBanner("error", `打开 README 失败：${toErrorMessage(error)}`);
+  }
+}
+
 const store = {
   state,
   presets: PRESETS,
   allChanges,
+  canCompare,
+  compareValidationMessage,
   filteredFiles,
   availableExtensions,
   resultCounts,
   currentModeLabel,
+  resultSummaryText,
+  notify: setBanner,
   initialize,
   setPage,
+  swapFolders,
+  markFolderDropTarget,
+  handleFolderDrop,
+  cancelFolderDrop,
   applyPreset,
   pickFolder,
   clearFolder,
@@ -467,6 +591,8 @@ const store = {
   copyCurrentList,
   copyAddedAndModified,
   getFilterCount,
+  resetResultFilters,
+  openReadme,
 };
 
 export function useCompareStore() {

@@ -6,6 +6,7 @@ defineProps<{
   value: string;
   placeholder: string;
   hint: string;
+  isDropActive?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -16,7 +17,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div :class="['folder-box', { 'is-filled': value.trim().length > 0 }]">
+  <div :class="['folder-box', { 'is-filled': value.trim().length > 0, 'is-drop-active': isDropActive }]">
     <div class="folder-head">
       <div class="folder-label">{{ label }}</div>
       <div class="folder-tag">{{ tag }}</div>
@@ -25,7 +26,7 @@ const emit = defineEmits<{
     <button class="drop" type="button" @click="emit('choose')">
       <div class="drop-icon">{{ iconText }}</div>
       <div class="drop-copy">
-        <div class="drop-title">点击选择文件夹，或直接手动输入路径</div>
+        <div class="drop-title">拖入{{ label }}，或手动选择</div>
         <div class="drop-tip">{{ hint }}</div>
       </div>
       <span class="btn ghost">选择</span>
