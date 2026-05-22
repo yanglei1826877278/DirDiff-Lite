@@ -29,7 +29,7 @@ const emit = defineEmits<{
         <div class="drop-title">拖入{{ label }}，或手动选择</div>
         <div class="drop-tip">{{ hint }}</div>
       </div>
-      <span class="btn ghost">选择</span>
+      <span class="btn ghost drop-action">选择</span>
     </button>
 
     <div class="path-row">

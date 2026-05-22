@@ -184,29 +184,6 @@ button {
   background: var(--accent);
 }
 
-.sidebar-note {
-  margin-top: auto;
-  max-height: 200px;
-  overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: rgba(255, 250, 242, 0.75);
-  padding: 14px;
-}
-
-.sidebar-note strong {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.sidebar-note p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.55;
-}
-
 .main {
   width: 100%;
   max-width: 1320px;
@@ -251,13 +228,17 @@ button {
 .toast-mark {
   width: 44px;
   height: 44px;
-  display: grid;
-  place-items: center;
+  position: relative;
   border-radius: 14px;
-  font-size: 15px;
-  font-weight: 800;
-  color: #fffaf2;
   background: linear-gradient(180deg, rgba(201, 100, 66, 0.9), rgba(166, 79, 52, 0.9));
+}
+
+.toast-mark::after {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 999px;
+  background: rgba(255, 250, 242, 0.96);
 }
 
 .toast-notice.is-success .toast-mark {
@@ -400,6 +381,14 @@ h1 {
 .btn.ghost {
   pointer-events: none;
   background: rgba(255, 250, 242, 0.84);
+}
+
+.drop-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  line-height: 1;
 }
 
 .btn.small {

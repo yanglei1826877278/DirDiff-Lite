@@ -42,10 +42,5 @@ const navItems: Array<{ id: PageId; label: string }> = [
         <span>{{ item.label }}</span>
       </button>
     </nav>
-
-    <div class="sidebar-note">
-      <strong>v0.1 目标</strong>
-      <p>只做一个顺手的小工具：选两个文件夹，看新增、删除、修改，复制路径，导出 TXT。</p>
-    </div>
   </aside>
 </template>

@@ -36,15 +36,7 @@ onMounted(() => {
           role="status"
           aria-live="polite"
         >
-          <div class="toast-mark">
-            {{
-              store.state.banner.tone === "success"
-                ? "成"
-                : store.state.banner.tone === "error"
-                  ? "错"
-                  : "提"
-            }}
-          </div>
+          <div class="toast-mark" aria-hidden="true"></div>
           <div class="toast-copy">
             <strong>
               {{
