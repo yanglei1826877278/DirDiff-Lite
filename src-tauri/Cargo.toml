@@ -24,3 +24,5 @@ tauri-plugin-opener = "2"
 walkdir = "2"
 blake3 = "1"
 
+[target.'cfg(windows)'.dependencies]
+clipboard-win = { version = "5.4.1", features = ["std"] }

@@ -31,7 +31,7 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
       <AppTopbar
         eyebrow="Diff result"
         title="比较结果"
-        subtitle="查看新增、删除和修改文件。复制变更路径，或者导出简单 TXT 报告。"
+        subtitle="查看新增、删除和修改文件。复制路径、直接复制文件，或者导出简单 TXT 报告。"
       >
         <template #actions>
           <button class="btn" type="button" @click="store.setPage('compare')">重新比较</button>
@@ -168,7 +168,8 @@ const filterItems: Array<{ key: ResultFilter; label: string; desc: string }> = [
             <div class="result-table-area">
               <ResultTable
                 :files="store.paginatedFiles.value"
-                @copy="store.copyFileWithChoice"
+                @copy-path="store.copyFilePathWithChoice"
+                @copy-file="store.copyFileToClipboard"
                 @reveal="store.revealFileInFolder"
               />
             </div>

@@ -1,4 +1,5 @@
 use crate::{
+    clipboard,
     comparator,
     config,
     models::{AppConfig, CompareOptions, CompareProgress, CompareResult, ExportReportRequest},
@@ -57,6 +58,11 @@ pub async fn compare_folders(app: AppHandle, options: CompareOptions) -> Result<
 #[tauri::command]
 pub fn export_txt_report(request: ExportReportRequest) -> Result<(), String> {
     report::export_report(&request)
+}
+
+#[tauri::command]
+pub fn copy_file_to_clipboard(path: String) -> Result<(), String> {
+    clipboard::copy_file_to_clipboard(&path)
 }
 
 #[tauri::command]

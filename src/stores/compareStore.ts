@@ -546,7 +546,7 @@ async function copyPath(path: string): Promise<void> {
   }
 }
 
-async function copyFileWithChoice(file: DiffFile): Promise<void> {
+async function copyFilePathWithChoice(file: DiffFile): Promise<void> {
   const useFullPath = await ask(
     `要复制这个文件的完整路径吗？\n\n选择“是”复制完整路径。\n选择“否”复制相对路径。`,
     {
@@ -561,6 +561,20 @@ async function copyFileWithChoice(file: DiffFile): Promise<void> {
     useFullPath && file.absolutePath?.trim().length ? file.absolutePath : file.path;
 
   await copyPath(targetPath);
+}
+
+async function copyFileToClipboard(file: DiffFile): Promise<void> {
+  if (!file.absolutePath?.trim()) {
+    setBanner("error", "当前文件没有可用的绝对路径。");
+    return;
+  }
+
+  try {
+    await invoke("copy_file_to_clipboard", { path: file.absolutePath });
+    setBanner("success", "文件已复制到剪贴板，可直接到资源管理器里粘贴。");
+  } catch (error) {
+    setBanner("error", `复制文件失败：${toErrorMessage(error)}`);
+  }
 }
 
 async function revealFileInFolder(file: DiffFile): Promise<void> {
@@ -778,7 +792,8 @@ const store = {
   resetSettingsDraft,
   exportReport,
   copyPath,
-  copyFileWithChoice,
+  copyFilePathWithChoice,
+  copyFileToClipboard,
   copyCurrentList,
   copyAddedAndModified,
   revealFileInFolder,

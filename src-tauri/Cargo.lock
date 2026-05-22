@@ -790,6 +790,7 @@ name = "dirdiff-lite"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "clipboard-win",
  "serde",
  "serde_json",
  "tauri",

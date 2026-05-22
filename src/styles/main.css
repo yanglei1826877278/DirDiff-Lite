@@ -456,6 +456,16 @@ h1 {
   font-size: 12px;
 }
 
+.btn.small.copy-file-btn {
+  border-color: rgba(79, 111, 82, 0.42);
+  background: rgba(231, 243, 233, 0.9);
+  color: var(--green);
+}
+
+.btn.small.copy-file-btn:hover:not(:disabled) {
+  background: rgba(221, 238, 225, 0.98);
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) 360px;
@@ -1006,6 +1016,7 @@ select:focus {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+  white-space: nowrap;
 }
 
 .table-wrap {
@@ -1017,7 +1028,8 @@ select:focus {
 }
 
 table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
 }
 
@@ -1035,6 +1047,17 @@ td {
   padding: 12px;
   border-bottom: 1px solid var(--line);
   font-size: 13px;
+  vertical-align: middle;
+}
+
+.path-cell {
+  min-width: 640px;
+}
+
+.path {
+  display: inline-block;
+  min-width: max-content;
+  white-space: nowrap;
 }
 
 tr:last-child td {
